@@ -1,8 +1,14 @@
 import UIKit
 
+public protocol LightboxControllerTransitionDelegate: class {
+  func lightboxController(_ controller: LightboxController?, didChangeWithAlpha alpha: CGFloat)
+  func lightboxController(_ controller: LightboxController?, didEndWithClosing closing: Bool)
+}
+
 public protocol LightboxControllerPageDelegate: class {
 
   func lightboxController(_ controller: LightboxController, didMoveToPage page: Int)
+  func lightboxController(_ controller: LightboxController, remoteImageDidLoad image: UIImage?)
 }
 
 public protocol LightboxControllerDismissalDelegate: class {
@@ -136,6 +142,11 @@ open class LightboxController: UIViewController {
     }
   }
 
+  open weak var transitionDelegate: LightboxControllerTransitionDelegate? {
+    didSet {
+      transitionManager.transitionDelegate = transitionDelegate
+    }
+  }
   open weak var pageDelegate: LightboxControllerPageDelegate?
   open weak var dismissalDelegate: LightboxControllerDismissalDelegate?
   open weak var imageTouchDelegate: LightboxControllerTouchDelegate?
@@ -236,6 +247,7 @@ open class LightboxController: UIViewController {
     for i in 0..<images.count {
       let pageView = PageView(image: preloadIndicies.contains(i) ? images[i] : LightboxImageStub())
       pageView.pageViewDelegate = self
+      pageView.setup()
 
       scrollView.addSubview(pageView)
       pageViews.append(pageView)
@@ -383,6 +395,8 @@ extension LightboxController: UIScrollViewDelegate {
 extension LightboxController: PageViewDelegate {
 
   func remoteImageDidLoad(_ image: UIImage?, imageView: UIImageView) {
+    pageDelegate?.lightboxController(self, remoteImageDidLoad: image)
+    
     guard let image = image, dynamicBackground else {
       return
     }

@@ -1,8 +1,10 @@
 import UIKit
 import Lightbox
+import SDWebImage
 
 class ViewController: UIViewController {
-  
+  var lightboxController: LightboxController?
+    
   lazy var showButton: UIButton = { [unowned self] in
     let button = UIButton()
     button.addTarget(self, action: #selector(showLightbox), for: .touchUpInside)
@@ -21,13 +23,22 @@ class ViewController: UIViewController {
     view.autoresizingMask = [.flexibleTopMargin, .flexibleLeftMargin, .flexibleRightMargin, .flexibleBottomMargin]
     view.backgroundColor = UIColor.white
     view.addSubview(showButton)
+    
+//    LightboxConfig.loadImage = { imageView, URL, completion in
+//        imageView.sd_setImage(with: URL, placeholderImage: nil, completed: { image, _, _, _ in
+//            completion?(image)
+//        })
+//    }
+    
+    LightboxConfig.CloseButton.enabled = false
+    LightboxConfig.DeleteButton.enabled = false
+    LightboxConfig.InfoLabel.enabled = false
+    LightboxConfig.PageIndicator.enabled = false
   }
-  
-  // MARK: - Action methods
   
   @objc func showLightbox() {
     let images = [
-      LightboxImage(imageURL: URL(string: "https://cdn.arstechnica.net/2011/10/05/iphone4s_sample_apple-4e8c706-intro.jpg")!),
+      LightboxImage(imageURL: URL(string: "https://cdn.artstationdev.com/p/assets/images/images/000/080/826/original/peter-brown-source.gif?1555341195")!),
       LightboxImage(
         image: UIImage(named: "photo1")!,
         text: "Photography is the science, art, application and practice of creating durable images by recording light or other electromagnetic radiation, either electronically by means of an image sensor, or chemically by means of a light-sensitive material such as photographic film"
@@ -43,10 +54,33 @@ class ViewController: UIViewController {
       )
     ]
     
-    let controller = LightboxController(images: images)
-    controller.dynamicBackground = true
+    lightboxController?.view.removeFromSuperview()
+    lightboxController?.removeFromParent()
     
-    present(controller, animated: true, completion: nil)
+    let controller = LightboxController(images: images, startIndex: 1)
+    lightboxController = controller
+    controller.dynamicBackground = false
+    controller.pageDelegate = self
+    controller.transitionDelegate = self
+    addChild(controller)
+    view.addSubview(controller.view)
+//    present(controller, animated: true, completion: nil)
   }
 }
 
+extension ViewController: LightboxControllerPageDelegate {
+    func lightboxController(_ controller: LightboxController, didMoveToPage page: Int) {
+    }
+    
+    func lightboxController(_ controller: LightboxController, remoteImageDidLoad image: UIImage?) {
+    }
+}
+
+extension ViewController: LightboxControllerTransitionDelegate {
+    func lightboxController(_ controller: LightboxController?, didChangeWithAlpha alpha: CGFloat) {
+    }
+    
+    func lightboxController(_ controller: LightboxController?, didEndWithClosing closing: Bool) {
+    }
+
+}

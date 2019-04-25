@@ -1,4 +1,5 @@
 import UIKit
+import SDWebImage
 
 protocol PageViewDelegate: class {
 
@@ -10,8 +11,8 @@ protocol PageViewDelegate: class {
 
 class PageView: UIScrollView {
 
-  lazy var imageView: UIImageView = {
-    let imageView = UIImageView()
+  lazy var imageView: SDAnimatedImageView = {
+    let imageView = SDAnimatedImageView()
     imageView.contentMode = .scaleAspectFit
     imageView.clipsToBounds = true
     imageView.isUserInteractionEnabled = true
@@ -50,10 +51,8 @@ class PageView: UIScrollView {
     super.init(frame: CGRect.zero)
 
     configure()
-
-    fetchImage()
   }
-
+    
   required init?(coder aDecoder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
@@ -89,6 +88,10 @@ class PageView: UIScrollView {
   func update(with image: LightboxImage) {
     self.image = image
     updatePlayButton()
+    fetchImage()
+  }
+    
+  func setup() {
     fetchImage()
   }
 

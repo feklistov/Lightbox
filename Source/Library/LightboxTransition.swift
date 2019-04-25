@@ -13,7 +13,7 @@ class LightboxTransition: UIPercentDrivenInteractiveTransition {
   var interactive = false
   var dismissing = false
   var initialOrigin = CGPoint(x: 0, y: 0)
-
+  
   var scrollView: UIScrollView? {
     didSet {
       guard let scrollView = scrollView else { return }
@@ -22,7 +22,8 @@ class LightboxTransition: UIPercentDrivenInteractiveTransition {
   }
 
   weak var lightboxController: LightboxController?
-
+  weak var transitionDelegate: LightboxControllerTransitionDelegate?
+  
   // MARK: - Transition
 
   func transition(_ show: Bool) {
@@ -45,23 +46,26 @@ class LightboxTransition: UIPercentDrivenInteractiveTransition {
     switch gesture.state {
     case .began:
       interactive = true
-      lightboxController?.presented = false
-      lightboxController?.dismiss(animated: true, completion: nil)
       if let origin = scrollView?.frame.origin { initialOrigin = origin }
     case .changed:
       update(percentage)
       scrollView?.frame.origin.y = initialOrigin.y + translation.y
+      let alpha = 1 - max(0, (2 * percentage) - 0.1)
+      lightboxController?.view.alpha = alpha
+      transitionDelegate?.lightboxController(lightboxController, didChangeWithAlpha: alpha)
     case .ended, .cancelled:
 
       var time = translation.y * 3 / abs(velocity.y)
       if time > 1 { time = 0.7 }
 
       interactive = false
-      lightboxController?.presented = true
+
+      transitionDelegate?.lightboxController(lightboxController, didEndWithClosing: percentage > 0.1)
+      
+      guard let controller = lightboxController else { return }
 
       if percentage > 0.1 {
         finish()
-        guard let controller = lightboxController else { return }
 
         controller.headerView.alpha = 0
         controller.footerView.alpha = 0
@@ -70,12 +74,14 @@ class LightboxTransition: UIPercentDrivenInteractiveTransition {
           self.scrollView?.frame.origin.y = translation.y * 3
           controller.view.alpha = 0
           controller.view.backgroundColor = UIColor.black.withAlphaComponent(0)
+          controller.dismiss(animated: true)
           }, completion: { _ in })
       } else {
         cancel()
 
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.035) {
           UIView.animate(withDuration: 0.35, animations: {
+            controller.view.alpha = 1
             self.scrollView?.frame.origin = self.initialOrigin
           })
         }
